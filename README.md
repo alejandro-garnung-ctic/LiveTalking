@@ -266,3 +266,60 @@ python app.py --transport webrtc --model wav2lip --avatar_id wav2lip256_avatar1
 | 微信公众号 | 数字人技术 |
 
 <img src="./assets/qrcode-wechat.jpg" align="middle" />
+
+---
+
+## Integración con ctic-jAnItor / PorterIA (avatar de vídeo)
+
+Este fork añade lo necesario para usar LiveTalking como **avatar de vídeo con
+lipsync** dentro del flujo de voz de ctic-jAnItor, sustituyendo el render 3D de
+TalkingHead sin cambiar el resto del pipeline (STT → LLM → TTS).
+
+### 1. `AVATAR_VIDEO_DELAY_MS` (retardo de vídeo)
+
+El vídeo va ligeramente por delante del audio en el navegador (latencia del
+altavoz), lo que descuadra el lipsync. `server/webrtc.py` acepta:
+
+```bash
+AVATAR_VIDEO_DELAY_MS=120 python app.py --transport webrtc --model wav2lip \
+  --avatar_id turin9 --listenport 8020
+```
+
+- `0` (por defecto): sin retardo.
+- `120`: valor recomendado en la máquina de pruebas. Ajustar entre `80` y `180`:
+  si el audio suena **después** del movimiento, súbelo; si suena **antes**,
+  bájalo.
+
+### 2. Arranque condicional con systemd
+
+`deploy/run-if-enabled.sh` solo arranca LiveTalking si
+`AVATAR_UI_MODE=livetalking` en el `.env` de ctic-jAnItor; en cualquier otro
+modo sale con código 0 (systemd no lo reinicia).
+
+```bash
+sudo cp deploy/livetalking.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable livetalking.service
+sudo systemctl start livetalking.service
+```
+
+- `.env` por defecto: `/opt/ctic-jAnItor/.env` (configurable con
+  `LIVETALKING_ENV_FILE`).
+- Variables leídas: `AVATAR_UI_MODE`, `LIVETALKING_AVATAR`,
+  `AVATAR_VIDEO_DELAY_MS`, `LIVETALKING_PORT`.
+- Cambiar de modo: editar `AVATAR_UI_MODE` y `sudo systemctl restart livetalking`.
+- Logs: `journalctl -u livetalking -f`.
+
+### 3. Integración con el embed web (`avatar-live`)
+
+En ctic-jAnItor, el servicio `avatar-live` recibe texto, sintetiza con LiteLLM
+(`POST /v1/audio/speech`) y reenvía el WAV a `LiveTalking /humanaudio`. El iframe
+(`avatar-3d`, modo `livetalking`) conecta por WebRTC y reproduce el vídeo. Ver
+`services/avatar-live/README.md` en ctic-jAnItor.
+
+### 4. Requisitos
+
+- GPU NVIDIA (probado en RTX PRO 2000 Blackwell, 8 GB) con `torch` cu128.
+- `models/wav2lip.pth` y avatar en `data/avatars/<avatar_id>/`.
+- Puerto `8020` accesible desde el navegador (WebRTC).
+

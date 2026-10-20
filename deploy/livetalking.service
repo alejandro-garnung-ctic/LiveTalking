@@ -1,0 +1,18 @@
+[Unit]
+Description=LiveTalking avatar (solo si AVATAR_UI_MODE=livetalking)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/livetalking
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/livetalking/run-if-enabled.sh
+# Si el wrapper sale 0 (modo no activo) no se reinicia.
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
