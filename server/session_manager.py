@@ -34,12 +34,12 @@ class SessionManager:
         if not hasattr(self, "initialized"):
             self.sessions: Dict[str, BaseAvatar] = {}
             self.build_session_fn = None
-            self.max_session = 1   # default, override via set_max_session()
+            self.max_session = None   # None = unlimited, override via set_max_session()
             self.initialized = True
 
     def set_max_session(self, n: int):
-        """设置最大并发会话数"""
-        self.max_session = max(1, n)
+        """设置最大并发会话数 (<=0 表示不限制)"""
+        self.max_session = n if n and n > 0 else None
 
     def init_builder(self, build_session_fn):
         """配置用于构建 avatar_session 的工厂函数"""
@@ -64,9 +64,9 @@ class SessionManager:
         if sessionid is None:
             sessionid = _rand_session_id()
             
-        # 检查是否达到最大会话数
+        # 检查是否达到最大会话数（max_session 为 None 时不限制）
         active_count = sum(1 for s in self.sessions.values() if s is not None)
-        if active_count >= self.max_session:
+        if self.max_session is not None and active_count >= self.max_session:
             raise MaxSessionError(
                 f"Maximum session limit reached ({active_count}/{self.max_session})"
             )
