@@ -67,3 +67,44 @@ En ctic-jAnItor, el servicio `avatar-live` recibe texto, sintetiza con LiteLLM
 - `models/wav2lip.pth` y avatar en `data/avatars/<avatar_id>/`.
 - Puerto `8020` accesible desde el navegador (WebRTC).
 
+### 6. Subir un nuevo avatar (endpoint)
+
+El endpoint para generar un avatar a partir de un vídeo es:
+
+```
+POST http://<host>:<listenport>/api/avatar/task
+```
+
+Es **multipart/form-data** (o JSON con `video_path` si el vídeo ya está en el
+servidor). Ejemplo con `curl`:
+
+```bash
+curl -X POST http://localhost:8020/api/avatar/task \
+  -F model=wav2lip \
+  -F avatar_id=turin12 \
+  -F video_file=@/ruta/al/video.mp4 \
+  -F img_size=256
+```
+
+- `model`: `wav2lip` o `musetalk`.
+- `avatar_id`: nombre de la carpeta que se creará en `data/avatars/<avatar_id>/`.
+- `video_file`: vídeo fuente (cámara fija, boca cerrada, buena luz).
+- Otros: `img_size` (256), `pads`, `bbox_shift`, `extra_margin`,
+  `parsing_mode`, `version`, `notifyurl`… (ver `docs/avatar_api.md`).
+
+La tarea es **asíncrona**. Consulta su estado con:
+
+```bash
+curl http://localhost:8020/api/avatar/task/<task_id>
+curl http://localhost:8020/api/avatar/tasks
+```
+
+Cuando termine, en `data/avatars/<avatar_id>/` deben existir `coords.pkl`,
+`full_imgs/` y `face_imgs/`. Después arranca LiveTalking con ese avatar
+(`--avatar_id <avatar_id>`, o `LIVETALKING_AVATAR` en el `.env` de ctic-jAnItor).
+
+> Si falta `coords.pkl`, la generación no terminó (mira el estado de la tarea y el
+> log de LiveTalking).
+
+Documentación completa: [`docs/avatar_api.md`](docs/avatar_api.md).
+
