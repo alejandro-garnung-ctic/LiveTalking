@@ -67,9 +67,19 @@ En ctic-jAnItor, el servicio `avatar-live` recibe texto, sintetiza con LiteLLM
 - `models/wav2lip.pth` y avatar en `data/avatars/<avatar_id>/`.
 - Puerto `8020` accesible desde el navegador (WebRTC).
 
-### 6. Subir un nuevo avatar (endpoint)
+### 6. Subir un nuevo avatar
 
-El endpoint para generar un avatar a partir de un vídeo es:
+La forma más sencilla es la **web de generación de avatares**:
+
+```
+http://<host>:<listenport>/avatar-en.html   # inglés
+http://<host>:<listenport>/avatar.html      # chino
+```
+
+Ejemplo: <http://localhost:8020/avatar-en.html>. Sube el vídeo, indica el
+`avatar_id`, elige `wav2lip`/`musetalk` y lanza la generación.
+
+También puedes hacerlo por API:
 
 ```
 POST http://<host>:<listenport>/api/avatar/task
