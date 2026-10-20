@@ -26,8 +26,10 @@ fi
 AVATAR="$(get LIVETALKING_AVATAR)"; AVATAR="${AVATAR:-turin9}"
 DELAY="$(get AVATAR_VIDEO_DELAY_MS)"; DELAY="${DELAY:-120}"
 PORT="$(get LIVETALKING_PORT)"; PORT="${PORT:-8020}"
+MAX="$(get LIVETALKING_MAX_SESSION)"; MAX="${MAX:-0}"
 
 export AVATAR_VIDEO_DELAY_MS="$DELAY"
 cd /opt/livetalking
 exec /opt/livetalking/.venv/bin/python app.py \
-  --transport webrtc --model wav2lip --avatar_id "$AVATAR" --listenport "$PORT"
+  --transport webrtc --model wav2lip --avatar_id "$AVATAR" --listenport "$PORT" \
+  --max_session "$MAX"

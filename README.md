@@ -11,7 +11,7 @@ altavoz), lo que descuadra el lipsync. `server/webrtc.py` acepta:
 
 ```bash
 AVATAR_VIDEO_DELAY_MS=120 python app.py --transport webrtc --model wav2lip \
-  --avatar_id turin9 --listenport 8020
+  --avatar_id turin9 --listenport 8020 --max_session 0
 ```
 
 - `0` (por defecto): sin retardo.
@@ -24,8 +24,14 @@ AVATAR_VIDEO_DELAY_MS=120 python app.py --transport webrtc --model wav2lip \
 ```bash
 cd /opt/livetalking
 AVATAR_VIDEO_DELAY_MS=120 .venv/bin/python app.py --transport webrtc \
-  --model wav2lip --avatar_id turin9 --listenport 8020
+  --model wav2lip --avatar_id turin9 --listenport 8020 --max_session 0
 ```
+
+- `--max_session 0` (o negativo) desactiva el límite de sesiones concurrentes;
+  también es el valor por defecto. Si se omite, no hay límite.
+- Cada reintento del navegador crea una sesión. Con el límite antiguo (5) los
+  reintentos lo llenaban y bloqueaban la conexión con
+  `Maximum session limit reached (5/5)`; por eso conviene dejarlo ilimitado.
 
 ### 3. Arranque condicional con systemd
 
@@ -43,7 +49,8 @@ sudo systemctl start livetalking.service
 - `.env` por defecto: `/opt/ctic-jAnItor/.env` (configurable con
   `LIVETALKING_ENV_FILE`).
 - Variables leídas: `AVATAR_UI_MODE`, `LIVETALKING_AVATAR`,
-  `AVATAR_VIDEO_DELAY_MS`, `LIVETALKING_PORT`.
+  `AVATAR_VIDEO_DELAY_MS`, `LIVETALKING_PORT`,
+  `LIVETALKING_MAX_SESSION` (`0` = ilimitado, por defecto).
 - Cambiar de modo: editar `AVATAR_UI_MODE` y `sudo systemctl restart livetalking`.
 - Logs: `journalctl -u livetalking -f`.
 
