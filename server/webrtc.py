@@ -18,6 +18,7 @@
 import asyncio
 import json
 import logging
+import os
 import threading
 import time
 from typing import Tuple, Dict, Optional, Set, Union
@@ -34,6 +35,9 @@ VIDEO_PTIME = 0.040 #1 / 25  # 30fps
 VIDEO_TIME_BASE = fractions.Fraction(1, VIDEO_CLOCK_RATE)
 SAMPLE_RATE = 16000
 AUDIO_TIME_BASE = fractions.Fraction(1, SAMPLE_RATE)
+# Retardo del vídeo (ms) para compensar la latencia del audio en el navegador.
+# El vídeo va por delante del sonido; esto lo retrasa para cuadrar el lipsync.
+VIDEO_DELAY_S = float(os.getenv("AVATAR_VIDEO_DELAY_MS", "0")) / 1000.0
 
 #from aiortc.contrib.media import MediaPlayer, MediaRelay
 #from aiortc.rtcrtpsender import RTCRtpSender
@@ -58,6 +62,7 @@ class PlayerStreamTrack(MediaStreamTrack):
         self._queue = queue.Queue(maxsize=100)
         self.timelist = [] #记录最近包的时间戳
         self.current_frame_count = 0
+        self._video_delayed = False
         if self.kind == 'video':
             self.framecount = 0
             self.lasttime = time.perf_counter()
@@ -133,6 +138,13 @@ class PlayerStreamTrack(MediaStreamTrack):
             except queue.Empty:
                 await asyncio.sleep(0.005)
                 
+        # Retrasa el primer frame de vídeo para alinear con el audio del navegador.
+        if self.kind == 'video' and not self._video_delayed:
+            self._video_delayed = True
+            if VIDEO_DELAY_S > 0:
+                mylogger.info('video delay %.0f ms', VIDEO_DELAY_S * 1000)
+                await asyncio.sleep(VIDEO_DELAY_S)
+
         pts, time_base = await self.next_timestamp()
         frame.pts = pts
         frame.time_base = time_base
