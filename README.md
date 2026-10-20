@@ -290,7 +290,15 @@ AVATAR_VIDEO_DELAY_MS=120 python app.py --transport webrtc --model wav2lip \
   si el audio suena **después** del movimiento, súbelo; si suena **antes**,
   bájalo.
 
-### 2. Arranque condicional con systemd
+### 2. Lanzar a mano (simple)
+
+```bash
+cd /opt/livetalking
+AVATAR_VIDEO_DELAY_MS=120 .venv/bin/python app.py --transport webrtc \
+  --model wav2lip --avatar_id turin9 --listenport 8020
+```
+
+### 3. Arranque condicional con systemd
 
 `deploy/run-if-enabled.sh` solo arranca LiveTalking si
 `AVATAR_UI_MODE=livetalking` en el `.env` de ctic-jAnItor; en cualquier otro
@@ -310,14 +318,14 @@ sudo systemctl start livetalking.service
 - Cambiar de modo: editar `AVATAR_UI_MODE` y `sudo systemctl restart livetalking`.
 - Logs: `journalctl -u livetalking -f`.
 
-### 3. Integración con el embed web (`avatar-live`)
+### 4. Integración con el embed web (`avatar-live`)
 
 En ctic-jAnItor, el servicio `avatar-live` recibe texto, sintetiza con LiteLLM
 (`POST /v1/audio/speech`) y reenvía el WAV a `LiveTalking /humanaudio`. El iframe
 (`avatar-3d`, modo `livetalking`) conecta por WebRTC y reproduce el vídeo. Ver
 `services/avatar-live/README.md` en ctic-jAnItor.
 
-### 4. Requisitos
+### 5. Requisitos
 
 - GPU NVIDIA (probado en RTX PRO 2000 Blackwell, 8 GB) con `torch` cu128.
 - `models/wav2lip.pth` y avatar en `data/avatars/<avatar_id>/`.
